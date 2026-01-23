@@ -1,0 +1,61 @@
+server:
+  port: 8901
+  tomcat:
+    use-apr: never
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://192.168.5.129:5443/rag_area?defaultSchema=rag_area
+    username: rag_area
+    password: rag_area
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Shanghai
+        use_sql_comments: true
+  application:
+    name: test-demo
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+  gson:
+    date-format: yyyy-MM-dd HH:mm:ss
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: qwen3:8b
+      init:
+        chat:
+          additional-models:
+            - qwen3:8b
+            - deepseek-coder:6.7b
+            - deepseek-r1:8b
+            - qwen2:7b
+knife4j:
+  cors: true
+  setting:
+    enable-footer: false
+    enable-dynamic-parameter: true
+  insight:
+    service-name: Spring-AI 示例
+mock:
+  enabled: true
+  default-model: qwen3:8b
+logging:
+  level:
+    root: debug
+    web: debug
+    sql: debug
+  file:
+    name: @logFileName@
