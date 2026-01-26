@@ -13,9 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
+import top.duofeng.test.demo.base.pojo.NormalCodeName;
+import top.duofeng.test.demo.base.pojo.OuterServiceInfo;
 import top.duofeng.test.demo.base.utils.LocalIdGenerator;
-import top.duofeng.test.demo.common.FakeModelEnum;
-import top.duofeng.test.demo.common.OuterSystemEnum;
+import top.duofeng.test.demo.config.RagAreaConfig;
 import top.duofeng.test.demo.dao.ChatStarRatingDao;
 import top.duofeng.test.demo.dao.ConvRecordInfoDao;
 import top.duofeng.test.demo.dao.ConvSessionInfoDao;
@@ -34,9 +35,9 @@ import top.duofeng.test.demo.service.ConversationService;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.math.NumberUtils.INTEGER_ONE;
 import static top.duofeng.test.demo.common.StrConst.CHAT_SESS_PREFIX;
 
 /**
@@ -52,16 +53,27 @@ public class ConversationServiceImpl implements ConversationService {
     private final SessPriMappingDao sessPriMappingDao;
     private final ConvRecordInfoDao recordInfoDao;
     private final ChatStarRatingDao chatStarRatingDao;
+    private final List<NormalCodeName> maskProps;
+    private final Map<String, NormalCodeName> maskMap;
+    private final List<OuterServiceInfo> services;
 
 
-    public ConversationServiceImpl(ConvSessionInfoDao convSessionInfoDao,
-                                   ConvRecordInfoDao recordInfoDao,
-                                   ChatStarRatingDao chatStarRatingDao,
-                                   SessPriMappingDao sessPriMappingDao) {
+    public ConversationServiceImpl(
+            RagAreaConfig ragAreaConfig,
+            ConvSessionInfoDao convSessionInfoDao,
+            ConvRecordInfoDao recordInfoDao,
+            ChatStarRatingDao chatStarRatingDao,
+            SessPriMappingDao sessPriMappingDao) {
         this.convSessionInfoDao = convSessionInfoDao;
         this.recordInfoDao = recordInfoDao;
         this.sessPriMappingDao = sessPriMappingDao;
         this.chatStarRatingDao = chatStarRatingDao;
+        this.maskProps = ragAreaConfig.getMaskProps();
+        this.maskMap = ragAreaConfig.getMaskProps().stream().collect(Collectors.toMap(
+                NormalCodeName::getCode,
+                Function.identity(),
+                (v1,v2)->v1));
+        this.services = ragAreaConfig.getOuterServices();
     }
 
     @Override
@@ -82,10 +94,10 @@ public class ConversationServiceImpl implements ConversationService {
                         c.and(
                                 r.get("priId").in(list),
                                 StringUtils.hasText(priId) ? c.equal(r.get("priId"), priId) : c.isTrue(r.get("common"))
-                        ), Sort.by(Sort.Direction.ASC,"gmtBegin")).stream().collect(
+                        ), Sort.by(Sort.Direction.ASC, "gmtBegin")).stream().collect(
                         Collectors.groupingBy(ConvRecordInfoEnt::getPriId)
                 );
-        vo.setChatMap(all.stream().collect(Collectors.toMap(e -> FakeModelEnum.getByName(e.getMaskName()).toString(),
+        vo.setChatMap(all.stream().collect(Collectors.toMap(e -> maskMap.get(e.getMaskCode()).getCode(),
                 e -> toResponse(e, collect.get(e.getPriId())),
                 (v1, v2) -> v1
         )));
@@ -97,7 +109,7 @@ public class ConversationServiceImpl implements ConversationService {
                 .map(ent -> {
                     ChatResponseVO vo = new ChatResponseVO();
                     vo.setObject(null);
-                    vo.setMaskCode(FakeModelEnum.getByName(mappingEnt.getMaskName()).toString());
+                    vo.setMaskCode(maskMap.get(mappingEnt.getMaskCode()).getCode());
                     vo.setCreated(ent.getGmtEnd().toEpochSecond(ZoneOffset.ofHours(8)));
                     vo.setPrivateId(ent.getPriId());
                     vo.setMaskName(mappingEnt.getMaskName());
@@ -166,7 +178,7 @@ public class ConversationServiceImpl implements ConversationService {
                     ent.setLiked(ent.getLiked() - 1);
                     sessPriMappingDao.saveAndFlush(ent);
                 });
-        chatStarRatingDao.delete((r,q,c)->c.equal(r.get("priId"),priId));
+        chatStarRatingDao.delete((r, q, c) -> c.equal(r.get("priId"), priId));
         return Boolean.TRUE;
     }
 
@@ -177,34 +189,33 @@ public class ConversationServiceImpl implements ConversationService {
                 .map(ChatMessage::getContent).orElse(null);
     }
 
-    private Map<OuterSystemEnum, Pair<FakeModelEnum, String>> genSortMap(String sessionId) {
+    private Map<String, Pair<NormalCodeName, String>> genSortMap(String sessionId) {
         Stack<Integer> stack = new Stack<>();
-        int size = OuterSystemEnum.values().length;
+        int size = maskProps.size();
         while (stack.size() < size) {
-            int i = Math.abs(RandomUtil.randomInt() % size) + INTEGER_ONE;
+            int i = Math.abs(RandomUtil.randomInt() % size);
             if (!stack.contains(i)) {
                 stack.add(i);
             }
         }
-        Map<OuterSystemEnum, Pair<FakeModelEnum, String>> result = Maps.newHashMap();
-        Arrays.stream(OuterSystemEnum.values()).forEach(k -> {
+        Map<String, Pair<NormalCodeName, String>> result = Maps.newHashMap();
+        services.forEach(k -> {
             Integer pop = stack.pop();
-            FakeModelEnum fake = FakeModelEnum.getBySort(pop);
-            assert fake != null;
-            result.put(k, Pair.of(fake, genPrivateId(pop, sessionId, k.getCode())));
+            NormalCodeName normalCodeName = maskProps.get(pop);
+            result.put(k.getCode(), Pair.of(normalCodeName, genPrivateId(pop, sessionId, k.getCode())));
         });
         sessPriMappingDao.saveAll(result.entrySet().stream().map(entry ->
                 new SessPriMappingEnt(sessionId, entry.getKey(), entry.getValue())).toList());
         return result;
     }
 
-    private Map<OuterSystemEnum, Pair<FakeModelEnum, String>> getSortMap(String sessionId) {
+    private Map<String, Pair<NormalCodeName, String>> getSortMap(String sessionId) {
         List<SessPriMappingEnt> all = sessPriMappingDao.findAll((root, query, cb) ->
                 cb.equal(root.get("sessId"), sessionId));
         if (!CollectionUtils.isEmpty(all)) {
             return all.stream().collect(Collectors.toMap(
-                    e -> OuterSystemEnum.getByCode(e.getSysCode()),
-                    e -> Pair.of(Objects.requireNonNull(FakeModelEnum.getByName(e.getMaskName())),
+                    e -> e.getSysCode(),
+                    e -> Pair.of(Objects.requireNonNull(maskMap.get(e.getMaskCode())),
                             e.getPriId()),
                     (v1, v2) -> v1
             ));

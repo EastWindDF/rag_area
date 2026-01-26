@@ -1,17 +1,15 @@
 package top.duofeng.test.demo.service.impl;
 
-import cn.hutool.core.util.RandomUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
-import top.duofeng.test.demo.common.FakeModelEnum;
-import top.duofeng.test.demo.common.OuterSystemEnum;
+import top.duofeng.test.demo.base.pojo.NormalCodeName;
+import top.duofeng.test.demo.config.RagAreaConfig;
 import top.duofeng.test.demo.dao.ChatCitationInfoDao;
 import top.duofeng.test.demo.dao.ConvRecordInfoDao;
 import top.duofeng.test.demo.dao.ConvSessionInfoDao;
@@ -29,13 +27,11 @@ import top.duofeng.test.demo.service.CombineAIService;
 import top.duofeng.test.demo.service.ConversationService;
 import top.duofeng.test.demo.service.OuterService;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -44,47 +40,34 @@ import static top.duofeng.test.demo.common.StrConst.BLANK;
 @Service
 @Slf4j
 public class CombineAIServiceImpl implements CombineAIService {
-    private final Map<OuterSystemEnum, OuterService> serviceMap;
     private final SessPriMappingDao sessPriMappingDao;
     private final ConvRecordInfoDao convInfoDao;
     private final ChatCitationInfoDao chatCitationInfoDao;
     private final ConversationService conversationService;
     private final ConvSessionInfoDao convSessionInfoDao;
-
-    public CombineAIServiceImpl(List<OuterService> services,
+    private final OuterService outerService;
+    private final Map<String, NormalCodeName> maskMap;
+    public CombineAIServiceImpl(OuterService outerService,
+                                RagAreaConfig ragAreaConfig,
                                 ChatCitationInfoDao chatCitationInfoDao,
                                 SessPriMappingDao sessPriMappingDao, ConvRecordInfoDao convInfoDao,
                                 ConversationService conversationService, ConvSessionInfoDao convSessionInfoDao) {
-        serviceMap = services.stream().collect(Collectors.toMap(OuterService::getOuterEnum, Function.identity(),
-                (v1, v2) -> v1));
         this.sessPriMappingDao = sessPriMappingDao;
         this.convInfoDao = convInfoDao;
         this.chatCitationInfoDao = chatCitationInfoDao;
         this.conversationService = conversationService;
         this.convSessionInfoDao = convSessionInfoDao;
-    }
-
-    @Override
-    public Flux<ChatResponseVO> combineChat(ChatMsgReq req) {
-        ConvPriMappingDTO conv = conversationService.createConv(req, null);
-        Map<OuterSystemEnum, Pair<FakeModelEnum, String>> priMapping = conv.getPriMapping();
-        List<Flux<ChatResponseVO>> fluxStream = serviceMap.entrySet().stream().map(entry ->
-                entry.getValue().chatMessage(req, priMapping.get(entry.getKey()))).toList();
-        return Flux.merge(fluxStream);
+        this.outerService = outerService;
+        this.maskMap = ragAreaConfig.getMaskMap();
     }
 
     @Override
     public Flux<ChatResponseVO> combineChat(ChatMsgReq req, String userId) {
         ConvPriMappingDTO conv = conversationService.createConv(req, userId);
         conversationService.updateQuestion(req);
-        Map<OuterSystemEnum, Pair<FakeModelEnum, String>> priMapping = conv.getPriMapping();
+        Map<String, Pair<NormalCodeName, String>> priMapping = conv.getPriMapping();
         LocalDateTime begin = LocalDateTime.now();
-        List<Flux<ChatResponseVO>> fluxStream = serviceMap.entrySet()
-                .stream()
-                .map(entry ->
-                        entry.getValue()
-                                .chatMessage(req, priMapping.get(entry.getKey()))
-                                .delaySubscription(Duration.ofMillis(RandomUtil.randomInt(100)))).toList();
+        List<Flux<ChatResponseVO>> fluxStream = outerService.chats(req, priMapping);
         Map<String, List<ChatResponseVO>> resultMap = Maps.newConcurrentMap();
         Map<String, LocalDateTime> timeMap = Maps.newConcurrentMap();
         Flux<ChatResponseVO> merge = Flux.merge(fluxStream);
@@ -97,11 +80,11 @@ public class CombineAIServiceImpl implements CombineAIService {
     @Override
     public Flux<ChatResponseVO> chatSingle(ChatMsgReq req, String userId, boolean isPri) {
         String priId = req.getPriId();
-        final FakeModelEnum[] modelEnum = new FakeModelEnum[1];
+        final NormalCodeName[] modelEnum = new NormalCodeName[1];
         final LocalDateTime[] times = new LocalDateTime[1];
         Flux<ChatResponseVO> flux = sessPriMappingDao.findOne((r, q, c) -> c.equal(r.get("priId"), priId))
                 .map(ent -> {
-                    modelEnum[0] = FakeModelEnum.getByName(ent.getMaskName());
+                    modelEnum[0] = maskMap.get(ent.getMaskCode());
                     Optional<ConvSessionInfoEnt> sessionInfo = convSessionInfoDao.findById(ent.getSessId());
                     if (isPri) {
                         sessionInfo
@@ -113,13 +96,13 @@ public class CombineAIServiceImpl implements CombineAIService {
                                 info.setQuestion(req.getMessages().get(0).getContent());
                                 convSessionInfoDao.saveAndFlush(info);
                             });
-                    return OuterSystemEnum.getByCode(ent.getSysCode());
-                }).map(serviceMap::get)
-                .map(service -> {
+                    return ent.getSysCode();
+                }).map(code-> {
                     assert modelEnum[0] != null;
-                    times[0] = LocalDateTime.now();
-                    return service.chatMessage(req, Pair.of(modelEnum[0], priId));
-                }).orElse(Flux.empty());
+                    return outerService.chatSingle(code, Pair.of(modelEnum[0], priId), req)
+                            .doOnNext(resp->times[0]=LocalDateTime.now());
+                })
+                .orElse(Flux.empty());
         AtomicReference<Pair<ChatResponseVO, LocalDateTime>> reference = new AtomicReference<>();
         flux.subscribe(item -> reference.set(Pair.of(item, LocalDateTime.now())),
                 error -> log.error("FLUX订阅接口问题", error),
@@ -168,11 +151,11 @@ public class CombineAIServiceImpl implements CombineAIService {
                             });
                     chatCitationInfoDao.saveAllAndFlush(list);
                 });
-        if(!isPri){
-            convSessionInfoDao.findOne((r,q,c)->
-                c.and(c.equal(r.get("id"), req.getSession_id()),
-                        c.isFalse(r.get("answered"))))
-                    .ifPresent(info->{
+        if (!isPri) {
+            convSessionInfoDao.findOne((r, q, c) ->
+                            c.and(c.equal(r.get("id"), req.getSession_id()),
+                                    c.isFalse(r.get("answered"))))
+                    .ifPresent(info -> {
                         info.setAnswered(true);
                         info.setGmtModified(LocalDateTime.now());
                         convSessionInfoDao.saveAndFlush(info);

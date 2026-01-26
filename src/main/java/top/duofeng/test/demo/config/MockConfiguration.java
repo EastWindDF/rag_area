@@ -12,9 +12,7 @@ import java.io.Serializable;
  * author Rorschach
  * dateTime 2026/1/23 1:19
  */
-@Configuration
 @Data
-@ConfigurationProperties(prefix = "mock")
 public class MockConfiguration implements Serializable {
 
     private Boolean enabled;

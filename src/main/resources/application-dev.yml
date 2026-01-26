@@ -1,0 +1,53 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Shanghai
+        use_sql_comments: true
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://192.168.5.129:5443/rag_area?defaultSchema=rag_area
+    username: rag_area
+    password: rag_area
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: qwen3:8b
+      init:
+        chat:
+          additional-models:
+            - qwen3:8b
+            - deepseek-coder:6.7b
+            - deepseek-r1:8b
+            - qwen2:7b
+rag-area:
+  outer-services:
+    - name: 系统A
+      code: modelA
+      base: http://localhost:8801
+    - name: 系统B
+      code: modelB
+      base: http://localhost:8801
+    - name: 系统C
+      code: modelC
+      base: http://localhost:8801
+    - name: 系统D
+      code: modelD
+      base: http://localhost:8801
+  mask-props:
+    - code: ALPHA
+      name: 模型A
+    - code: BRAVO
+      name: 模型B
+    - code: CHARLIE
+      name: 模型C
+    - code: DELTA
+      name: 模型D
+  default-model: qwen3:8b

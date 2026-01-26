@@ -16,6 +16,12 @@
     <properties>
         <java.version>17</java.version>
         <spring-ai.version>1.1.0</spring-ai.version>
+        <hutool.version>5.8.40</hutool.version>
+        <netty-codec-http.version>4.2.8.Final</netty-codec-http.version>
+        <guava.version>32.0.1-android</guava.version>
+        <commons-lang3.version>3.18.0</commons-lang3.version>
+        <logback-core.version>1.5.25</logback-core.version>
+        <liqui.base.version>4.10.0</liqui.base.version>
         <buildPath>//${build.directory}</buildPath>
         <logFileName>info.log</logFileName>
     </properties>
@@ -54,7 +60,7 @@
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
-            <version>5.8.32</version>
+            <version>${hutool.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -63,7 +69,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>31.1-jre</version>
+            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>
@@ -79,12 +85,17 @@
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-community-dialects</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>${liqui.base.version}</version>
+        </dependency>
 
-        <!-- <dependency>
+        <dependency>
              <groupId>com.h2database</groupId>
              <artifactId>h2</artifactId>
              <scope>runtime</scope>
-         </dependency>-->
+         </dependency>
         <dependency>
             <groupId>com.oracle.database.jdbc</groupId>
             <artifactId>ojdbc11</artifactId>
@@ -104,6 +115,27 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <!-- 替换安全版本 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http</artifactId>
+            <version>${netty-codec-http.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback-core.version}</version>
         </dependency>
     </dependencies>
     <dependencyManagement>
@@ -132,7 +164,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>top.duofeng.spring.test.demo.TestDemoApplication</mainClass>
+                    <mainClass>top.duofeng.test.demo.TestDemoApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>

@@ -3,14 +3,14 @@ create table tb_task_info
 (
     id           varchar(64) primary key,
     title        varchar(64),
-    description  text,
+    description  clob,
     support_unit varchar(1000),
     bus_dir      varchar(1000),
-    work_goal      varchar(1000),
+    work_goal    varchar(1000),
     creator_id   varchar(64),
     creator_name varchar(256),
-    defaulted    bool default false,
-    gmt_create   timestamp default current_timestamp
+    defaulted    number(1) default 0,
+    gmt_create   date      default sysdate
 );
 
 comment on table tb_task_info is '任务信息表';
@@ -29,10 +29,10 @@ create table tb_conv_session_info
     id           varchar(64) primary key,
     title        varchar(1024),
     task_id      varchar(64),
-    answered     bool default false,
-    question     text,
-    gmt_create   timestamp default current_timestamp,
-    gmt_modified timestamp default current_timestamp
+    answered     number(1) default 0,
+    question     clob,
+    gmt_create   date      default sysdate,
+    gmt_modified date      default sysdate
 );
 
 comment on table tb_conv_session_info is '会话信息表';
@@ -44,16 +44,16 @@ comment on column tb_conv_session_info.answered is '是否已答复';
 -- 创建会话与对应模型ID映射表;
 create table tb_sess_pri_mapping
 (
-    id          varchar(64) primary key,
-    sess_id     varchar(64),
-    pri_id      varchar(64),
-    sys_code    varchar(64),
-    mask_name   varchar(128),
-    mask_code   varchar(128),
-    liked       int       default 0,
-    grade       float default 0,
-    gmt_create   timestamp default current_timestamp,
-    gmt_modified timestamp default current_timestamp
+    id           varchar(64) primary key,
+    sess_id      varchar(64),
+    pri_id       varchar(64),
+    sys_code     varchar(64),
+    mask_name    varchar(128),
+    mask_code    varchar(128),
+    liked        number(10) default 0,
+    grade        float      default 0,
+    gmt_create   date       default sysdate,
+    gmt_modified date       default sysdate
 );
 comment on table tb_sess_pri_mapping is '会话与对应模型ID映射表';
 comment on column tb_sess_pri_mapping.sess_id is '会话ID';
@@ -68,11 +68,11 @@ create table tb_conv_record_info
 (
     id        varchar(64) primary key,
     pri_id    varchar(64),
-    question  text,
-    answer    text,
-    common    bool      default true,
-    gmt_begin timestamp default current_timestamp,
-    gmt_end   timestamp default current_timestamp
+    question  clob,
+    answer    clob,
+    common    number(1) default 1,
+    gmt_begin date      default sysdate,
+    gmt_end   date      default sysdate
 );
 comment on table tb_conv_record_info is '对话详情表';
 comment on column tb_conv_record_info.pri_id is '私有ID';
@@ -89,10 +89,10 @@ create table tb_chat_citation_info
     id         varchar(64) primary key,
     conv_id    varchar(64),
     ref_id     varchar(128),
-    summary    text,
-    gmt_begin  timestamp,
-    duration   bigint,
-    order_num  int default 0,
+    summary    clob,
+    gmt_begin  date,
+    duration   number(10),
+    order_num  number(10) default 0,
     call_num   varchar(128),
     called_num varchar(128),
     labels     varchar(4000)
@@ -110,19 +110,20 @@ comment on column tb_chat_citation_info.order_num is '排序字段';
 
 
 -- 创建星评信息表;
-create table tb_chat_star_rating(
-    id varchar(64) primary key,
-    pri_id varchar(64),
-    time_spent int default 0,
-    content int default 0,
-    accuracy int default 0,
-    sensitivity int default 0,
-    summary int default 0,
-    tag_accuracy int default 0,
-    processing int default 0,
-    remark text ,
-    user_id varchar(64),
-    gmt_create timestamp default current_timestamp
+create table tb_chat_star_rating
+(
+    id           varchar(64) primary key,
+    pri_id       varchar(64),
+    time_spent   number(10) default 0,
+    content      number(10) default 0,
+    accuracy     number(10) default 0,
+    sensitivity  number(10) default 0,
+    summary      number(10) default 0,
+    tag_accuracy number(10) default 0,
+    processing   number(10) default 0,
+    remark       clob,
+    user_id      varchar(64),
+    gmt_create   date       default sysdate
 );
 
 comment on table tb_chat_star_rating is '创建星评信息表';

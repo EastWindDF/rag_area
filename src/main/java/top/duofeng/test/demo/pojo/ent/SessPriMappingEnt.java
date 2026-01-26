@@ -1,7 +1,10 @@
 package top.duofeng.test.demo.pojo.ent;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,12 +12,10 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.util.Pair;
 import top.duofeng.test.demo.base.anno.CustomIdGenerator;
-import top.duofeng.test.demo.common.FakeModelEnum;
-import top.duofeng.test.demo.common.OuterSystemEnum;
+import top.duofeng.test.demo.base.pojo.NormalCodeName;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * project test-demo
@@ -48,6 +49,9 @@ public class SessPriMappingEnt implements Serializable {
     @Schema(title = "掩饰名称")
     @Column(name = "mask_name")
     private String maskName;
+    @Schema(title = "掩饰编号")
+    @Column(name = "mask_code")
+    private String maskCode;
     @Schema(title = "点赞")
     @Column(name = "liked")
     private Integer liked;
@@ -61,10 +65,10 @@ public class SessPriMappingEnt implements Serializable {
     @Column(name = "gmt_modified")
     private LocalDateTime gmtModified;
     public SessPriMappingEnt(String sessionId,
-                             OuterSystemEnum systemEnum,
-                             Pair<FakeModelEnum, String> pair) {
+                             String systemCode,
+                             Pair<NormalCodeName, String> pair) {
         this.sessId = sessionId;
-        this.sysCode = systemEnum.getCode();
+        this.sysCode = systemCode;
         this.maskName = pair.getFirst().getName();
         this.priId = pair.getSecond();
     }

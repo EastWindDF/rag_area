@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 import reactor.core.publisher.Flux;
 import top.duofeng.test.demo.config.MockConfiguration;
+import top.duofeng.test.demo.config.RagAreaConfig;
 import top.duofeng.test.demo.pojo.req.ChatMessage;
 import top.duofeng.test.demo.pojo.req.ChatMsgReq;
 import top.duofeng.test.demo.pojo.res.ChatChoice;
@@ -33,47 +34,9 @@ import java.util.List;
 @Data
 @Component
 public class DataCreateUtil implements Serializable {
-
-    private static OllamaChatModel chatModel;
-    private static MockConfiguration mockConfig;
-    public DataCreateUtil(OllamaChatModel chatModel,
-                          MockConfiguration mockConfig) {
-        DataCreateUtil.chatModel = chatModel;
-        DataCreateUtil.mockConfig = mockConfig;
-    }
-
-    public static Boolean isMocked(){
-        return mockConfig.getEnabled();
-    }
-
-
-    public static Flux<ChatResponseVO> genTest(ChatMsgReq req) {
-        List<Message> messages = Lists.newArrayList();
-        for (int i = 0; i < req.getMessages().size(); i++) {
-            ChatMessage chatMessage = req.getMessages().get(i);
-            messages.add(new UserMessage(chatMessage.getContent()));
-        }
-        Prompt prompt = new Prompt(messages);
-        OllamaChatOptions chatOption = OllamaChatOptions
-                .builder()
-                .disableThinking()
-                .model(mockConfig.getDefaultModel()).build();
-        prompt = prompt.mutate().chatOptions(chatOption).build();
-        Flux<ChatResponseVO> map = chatModel.stream(prompt)
-                .map(resp -> {
-                    ChatResponseVO vo = new ChatResponseVO();
-                    vo.setCreated(LocalDateTime.now().toEpochSecond(ZoneOffset.ofHours(8)));
-                    vo.setSession_id(req.getSession_id());
-                    String text = resp.getResult().getOutput().getText();
-                    ChatDelta delta = new ChatDelta();
-                    ChatChoice choice = new ChatChoice();
-                    choice.setDelta(delta);
-                    delta.setContent(text);
-                    choice.setFinish_reason(resp.getResult().getMetadata().getFinishReason());
-                    vo.setChoices(Lists.newArrayList(choice));
-                    return vo;
-                });
-        return map.concatWithValues(fakeReference());
+    private static RagAreaConfig ragAreaConfig;
+    public DataCreateUtil(RagAreaConfig ragAreaConfig) {
+        DataCreateUtil.ragAreaConfig = ragAreaConfig;
     }
 
     private static List<String> nums = Lists.newArrayList("10086","12315","10010",

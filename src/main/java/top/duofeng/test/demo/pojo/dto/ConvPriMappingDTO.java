@@ -5,8 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.util.Pair;
-import top.duofeng.test.demo.common.FakeModelEnum;
-import top.duofeng.test.demo.common.OuterSystemEnum;
+import top.duofeng.test.demo.base.pojo.NormalCodeName;
 import top.duofeng.test.demo.pojo.res.ConvCreatedVO;
 
 import java.io.Serializable;
@@ -24,7 +23,7 @@ import java.util.Map;
 public class ConvPriMappingDTO implements Serializable {
 
     private String sessionId;
-    private Map<OuterSystemEnum, Pair<FakeModelEnum, String>> priMapping;
+    private Map<String, Pair<NormalCodeName, String>> priMapping;
 
     public ConvCreatedVO toCreatedVO() {
         ConvCreatedVO vo = new ConvCreatedVO();
