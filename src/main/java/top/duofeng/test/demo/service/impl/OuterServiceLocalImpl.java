@@ -15,9 +15,11 @@ import top.duofeng.test.demo.pojo.res.ChatResponseVO;
 import top.duofeng.test.demo.service.OuterService;
 import top.duofeng.test.demo.utils.DataCreateUtil;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static java.lang.Integer.min;
 
@@ -39,8 +41,8 @@ public class OuterServiceLocalImpl implements OuterService {
     public Flux<ChatResponseVO> chatSingle(String systemCode,
                                            Pair<NormalCodeName, String> priPair,
                                            ChatMsgReq req) {
-        int idx = 0;
         List<ChatResponseVO> respList = Lists.newArrayList();
+        int idx = 0;
         while (idx < TEXT.length()) {
             int i = min(idx + RandomUtil.randomInt(1, 3), TEXT.length());
             ChatResponseVO vo = new ChatResponseVO();
@@ -58,8 +60,11 @@ public class OuterServiceLocalImpl implements OuterService {
             respList.add(vo);
             idx = i;
         }
-        respList.get(respList.size()-1).getChoices().get(0).setFinish_reason("stop");
-        return Flux.fromIterable(respList).concatWithValues(DataCreateUtil.fakeReference());
+        respList.get(respList.size() - 1).getChoices().get(0).setFinish_reason("stop");
+        ChatResponseVO responseVO = DataCreateUtil.fakeReference();
+        responseVO.setPrivateId(priPair.getSecond());
+        responseVO.setSession_id(req.getSession_id());
+        return Flux.fromIterable(respList).delayElements(Duration.ofMillis(RandomUtil.randomInt(100, 500)));
 
     }
 }

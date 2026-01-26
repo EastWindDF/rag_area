@@ -1,5 +1,6 @@
 package top.duofeng.test.demo.service.impl;
 
+import cn.hutool.core.util.RandomUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ import top.duofeng.test.demo.service.CombineAIService;
 import top.duofeng.test.demo.service.ConversationService;
 import top.duofeng.test.demo.service.OuterService;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +49,7 @@ public class CombineAIServiceImpl implements CombineAIService {
     private final ConvSessionInfoDao convSessionInfoDao;
     private final OuterService outerService;
     private final Map<String, NormalCodeName> maskMap;
+
     public CombineAIServiceImpl(OuterService outerService,
                                 RagAreaConfig ragAreaConfig,
                                 ChatCitationInfoDao chatCitationInfoDao,
@@ -97,10 +100,10 @@ public class CombineAIServiceImpl implements CombineAIService {
                                 convSessionInfoDao.saveAndFlush(info);
                             });
                     return ent.getSysCode();
-                }).map(code-> {
+                }).map(code -> {
                     assert modelEnum[0] != null;
                     return outerService.chatSingle(code, Pair.of(modelEnum[0], priId), req)
-                            .doOnNext(resp->times[0]=LocalDateTime.now());
+                            .doOnNext(resp -> times[0] = LocalDateTime.now());
                 })
                 .orElse(Flux.empty());
         AtomicReference<Pair<ChatResponseVO, LocalDateTime>> reference = new AtomicReference<>();
@@ -111,11 +114,14 @@ public class CombineAIServiceImpl implements CombineAIService {
     }
 
     private void copeMap(ChatResponseVO vo, Map<String, List<ChatResponseVO>> map, Map<String, LocalDateTime> timeMap) {
-        map.merge(vo.getPrivateId(), Lists.newArrayList(vo), (v1, v2) -> {
-            v1.addAll(v2);
-            return v1;
-        });
-        timeMap.put(vo.getPrivateId(), LocalDateTime.now());
+        Optional.ofNullable(vo)
+                .ifPresent(e -> {
+                    map.merge(e.getPrivateId(), Lists.newArrayList(e), (v1, v2) -> {
+                        v1.addAll(v2);
+                        return v1;
+                    });
+                    timeMap.put(e.getPrivateId(), LocalDateTime.now());
+                });
     }
 
     private String getResponseContext(ChatResponseVO vo) {

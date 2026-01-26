@@ -1,5 +1,6 @@
 package top.duofeng.test.demo.service;
 
+import com.google.common.collect.Lists;
 import org.springframework.data.util.Pair;
 import reactor.core.publisher.Flux;
 import top.duofeng.test.demo.base.pojo.NormalCodeName;
@@ -8,6 +9,7 @@ import top.duofeng.test.demo.pojo.res.ChatResponseVO;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public interface OuterService {
 
@@ -38,7 +40,9 @@ public interface OuterService {
             ChatMsgReq req);
 
     default List<Flux<ChatResponseVO>> chats(ChatMsgReq req , Map<String,Pair<NormalCodeName, String>> pairMap){
-        return pairMap.entrySet().stream().map(entry->this.chatSingle(entry.getKey(),
-                entry.getValue(), req)).toList();
+        List<Flux<ChatResponseVO>> list = Lists.newCopyOnWriteArrayList();
+        pairMap.forEach((key, value) -> CompletableFuture.runAsync(() -> list.add(this.chatSingle(key,
+                value, req))));
+        return list;
     }
 }
