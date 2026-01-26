@@ -70,6 +70,7 @@ public class SessPriMappingEnt implements Serializable {
         this.sessId = sessionId;
         this.sysCode = systemCode;
         this.maskName = pair.getFirst().getName();
+        this.maskCode = pair.getFirst().getCode();
         this.priId = pair.getSecond();
     }
 }

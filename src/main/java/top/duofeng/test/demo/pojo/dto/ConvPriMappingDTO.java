@@ -29,7 +29,7 @@ public class ConvPriMappingDTO implements Serializable {
         ConvCreatedVO vo = new ConvCreatedVO();
         Map<String, String> map = Maps.newHashMap();
         vo.setPriIdMapping(map);
-        priMapping.forEach((k, v) -> map.put(v.getFirst().toString(),
+        priMapping.forEach((k, v) -> map.put(v.getFirst().getCode(),
                 v.getSecond()));
         vo.setSessionId(sessionId);
         return vo;

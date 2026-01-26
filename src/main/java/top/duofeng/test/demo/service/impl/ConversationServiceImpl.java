@@ -214,7 +214,7 @@ public class ConversationServiceImpl implements ConversationService {
                 cb.equal(root.get("sessId"), sessionId));
         if (!CollectionUtils.isEmpty(all)) {
             return all.stream().collect(Collectors.toMap(
-                    e -> e.getSysCode(),
+                    SessPriMappingEnt::getSysCode,
                     e -> Pair.of(Objects.requireNonNull(maskMap.get(e.getMaskCode())),
                             e.getPriId()),
                     (v1, v2) -> v1
