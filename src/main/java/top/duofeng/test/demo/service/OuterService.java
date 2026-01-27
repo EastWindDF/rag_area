@@ -1,6 +1,7 @@
 package top.duofeng.test.demo.service;
 
 import com.google.common.collect.Lists;
+import lombok.SneakyThrows;
 import org.springframework.data.util.Pair;
 import reactor.core.publisher.Flux;
 import top.duofeng.test.demo.base.pojo.NormalCodeName;
@@ -39,10 +40,12 @@ public interface OuterService {
             Pair<NormalCodeName, String> priPair,
             ChatMsgReq req);
 
+    @SneakyThrows
     default List<Flux<ChatResponseVO>> chats(ChatMsgReq req , Map<String,Pair<NormalCodeName, String>> pairMap){
         List<Flux<ChatResponseVO>> list = Lists.newCopyOnWriteArrayList();
-        pairMap.forEach((key, value) -> CompletableFuture.runAsync(() -> list.add(this.chatSingle(key,
-                value, req))));
+        List<CompletableFuture<Void>> futures = Lists.newArrayList();
+        pairMap.forEach((k,v)-> futures.add(CompletableFuture.runAsync(()->list.add(this.chatSingle(k,v,req)))));
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
         return list;
     }
 }

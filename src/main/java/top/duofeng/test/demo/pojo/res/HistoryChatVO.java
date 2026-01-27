@@ -18,5 +18,5 @@ import java.util.Map;
 public class HistoryChatVO implements Serializable {
     private String sessionId;
     private String question;
-    private Map<String, List<ChatResponseVO>> chatMap;
+    private Map<String, List<ChatRespWithLikedVO>> chatMap;
 }

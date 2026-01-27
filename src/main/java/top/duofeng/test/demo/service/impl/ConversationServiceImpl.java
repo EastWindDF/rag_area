@@ -26,10 +26,7 @@ import top.duofeng.test.demo.pojo.ent.*;
 import top.duofeng.test.demo.pojo.req.ChatMessage;
 import top.duofeng.test.demo.pojo.req.ChatMsgReq;
 import top.duofeng.test.demo.pojo.req.add.ChatStarRatingAdd;
-import top.duofeng.test.demo.pojo.res.ChatChoice;
-import top.duofeng.test.demo.pojo.res.ChatDelta;
-import top.duofeng.test.demo.pojo.res.ChatResponseVO;
-import top.duofeng.test.demo.pojo.res.HistoryChatVO;
+import top.duofeng.test.demo.pojo.res.*;
 import top.duofeng.test.demo.service.ConversationService;
 
 import java.time.LocalDateTime;
@@ -104,10 +101,10 @@ public class ConversationServiceImpl implements ConversationService {
         return vo;
     }
 
-    private List<ChatResponseVO> toResponse(SessPriMappingEnt mappingEnt, List<ConvRecordInfoEnt> records) {
+    private List<ChatRespWithLikedVO> toResponse(SessPriMappingEnt mappingEnt, List<ConvRecordInfoEnt> records) {
         return records.stream().filter(ConvRecordInfoEnt::getCommon)
                 .map(ent -> {
-                    ChatResponseVO vo = new ChatResponseVO();
+                    ChatRespWithLikedVO vo = new ChatRespWithLikedVO();
                     vo.setObject(null);
                     vo.setMaskCode(maskMap.get(mappingEnt.getMaskCode()).getCode());
                     vo.setCreated(ent.getGmtEnd().toEpochSecond(ZoneOffset.ofHours(8)));
@@ -125,6 +122,7 @@ public class ConversationServiceImpl implements ConversationService {
                             .map(list -> list.stream()
                                     .map(ChatCitationInfoEnt::toVO).toList())
                             .ifPresent(vo::setCitations);
+                    vo.setLiked(Optional.ofNullable(mappingEnt.getLiked()).map(num->num>0).orElse(Boolean.FALSE));
                     return vo;
                 }).toList();
 
