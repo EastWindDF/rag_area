@@ -64,6 +64,7 @@ public class OuterServiceLocalImpl implements OuterService {
         ChatResponseVO responseVO = DataCreateUtil.fakeReference();
         responseVO.setPrivateId(priPair.getSecond());
         responseVO.setSession_id(req.getSession_id());
+        respList.add(responseVO);
         return Flux.fromIterable(respList).delayElements(Duration.ofMillis(RandomUtil.randomInt(100, 500)));
 
     }
