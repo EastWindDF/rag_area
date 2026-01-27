@@ -22,6 +22,7 @@ import top.duofeng.test.demo.pojo.ent.ConvSessionInfoEnt;
 import top.duofeng.test.demo.pojo.req.ChatMessage;
 import top.duofeng.test.demo.pojo.req.ChatMsgReq;
 import top.duofeng.test.demo.pojo.res.ChatChoice;
+import top.duofeng.test.demo.pojo.res.ChatCitation;
 import top.duofeng.test.demo.pojo.res.ChatDelta;
 import top.duofeng.test.demo.pojo.res.ChatResponseVO;
 import top.duofeng.test.demo.service.CombineAIService;
@@ -32,6 +33,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -106,11 +108,16 @@ public class CombineAIServiceImpl implements CombineAIService {
                             .doOnNext(resp -> times[0] = LocalDateTime.now());
                 })
                 .orElse(Flux.empty());
-        AtomicReference<Pair<ChatResponseVO, LocalDateTime>> reference = new AtomicReference<>();
-        flux.subscribe(item -> reference.set(Pair.of(item, LocalDateTime.now())),
+        List<ChatResponseVO> results = Lists.newArrayList();
+        AtomicReference<LocalDateTime> time = new AtomicReference<>(LocalDateTime.now());
+        flux.subscribe(item -> addResults(results, item, time),
                 error -> log.error("FLUX订阅接口问题", error),
-                () -> saveConvRecord(times[0], reference.get(), req, isPri));
+                () -> saveConvRecord(times[0], results, time.get(), req, isPri));
         return flux;
+    }
+    private void addResults(List<ChatResponseVO> results, ChatResponseVO vo, AtomicReference<LocalDateTime> times){
+        results.add(vo);
+        times.set(LocalDateTime.now());
     }
 
     private void copeMap(ChatResponseVO vo, Map<String, List<ChatResponseVO>> map, Map<String, LocalDateTime> timeMap) {
@@ -134,29 +141,40 @@ public class CombineAIServiceImpl implements CombineAIService {
     }
 
     private void saveConvRecord(LocalDateTime gmtBegin,
-                                Pair<ChatResponseVO, LocalDateTime> pair,
+                                List<ChatResponseVO> results,
+                                LocalDateTime endTime,
                                 ChatMsgReq req, boolean isPri) {
-        ChatResponseVO first = pair.getFirst();
+        String answer = BLANK;
+        List<ChatCitation> ents = Lists.newArrayList();
+        if(!CollectionUtils.isEmpty(results)){
+            answer = results.stream().map(ChatResponseVO::getChoices)
+                    .filter(list -> !CollectionUtils.isEmpty(list))
+                    .map(list -> list.get(0))
+                    .map(ChatChoice::getDelta)
+                    .filter(Objects::nonNull)
+                    .map(ChatDelta::getContent)
+                    .filter(StringUtils::hasText)
+                    .collect(Collectors.joining());
+            results.stream().map(ChatResponseVO::getCitations)
+                    .filter(list -> !CollectionUtils.isEmpty(list))
+                    .forEach(ents::addAll);
+        }
         ConvRecordInfoEnt ent = new ConvRecordInfoEnt();
         ent.setPriId(req.getPriId());
         ent.setGmtBegin(gmtBegin);
-        ent.setAnswer(first.getChoices().get(0).getDelta().getContent());
-        ent.setGmtEnd(pair.getSecond());
+        ent.setAnswer(answer);
+        ent.setGmtEnd(endTime);
         ent.setCommon(!isPri);
         ent = convInfoDao.saveAndFlush(ent);
         String convId = ent.getId();
-        Optional.ofNullable(first.getCitations())
-                .filter(list -> !CollectionUtils.isEmpty(list))
-                .map(list -> list.stream().map(ChatCitationInfoEnt::new).toList())
-                .ifPresent(list -> {
-                    IntStream.range(0, list.size())
-                            .forEach(i -> {
-                                ChatCitationInfoEnt infoEnt = list.get(i);
-                                infoEnt.setConvId(convId);
-                                infoEnt.setOrderNum(i);
-                            });
-                    chatCitationInfoDao.saveAllAndFlush(list);
-                });
+        if(!CollectionUtils.isEmpty(ents)){
+            List<ChatCitationInfoEnt> collect = ents.stream().filter(obj -> Objects.nonNull(obj) && StringUtils.hasText(obj.getId()))
+                    .map(ChatCitationInfoEnt::new)
+                    .collect(Collectors.toList());
+            if(!CollectionUtils.isEmpty(collect)){
+                chatCitationInfoDao.saveAllAndFlush(collect);
+            }
+        }
         if (!isPri) {
             convSessionInfoDao.findOne((r, q, c) ->
                             c.and(c.equal(r.get("id"), req.getSession_id()),

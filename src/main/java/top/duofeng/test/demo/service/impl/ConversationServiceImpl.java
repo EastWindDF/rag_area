@@ -94,7 +94,8 @@ public class ConversationServiceImpl implements ConversationService {
                         ), Sort.by(Sort.Direction.ASC, "gmtBegin")).stream().collect(
                         Collectors.groupingBy(ConvRecordInfoEnt::getPriId)
                 );
-        vo.setChatMap(all.stream().collect(Collectors.toMap(e -> maskMap.get(e.getMaskCode()).getCode(),
+        vo.setChatMap(all.stream().collect(Collectors.toMap(e ->
+                        maskMap.get(e.getMaskCode()).getCode(),
                 e -> toResponse(e, collect.get(e.getPriId())),
                 (v1, v2) -> v1
         )));
@@ -229,7 +230,6 @@ public class ConversationServiceImpl implements ConversationService {
         ent.setTaskId(taskId);
         convSessionInfoDao.save(ent);
     }
-
 
     private String genPrivateId(Integer sort, String sessionId, String sysCode) {
         String join = String.join(StrPool.DASHED, sessionId, sort + "", sysCode);

@@ -100,4 +100,11 @@ public class ConversationController {
             @RequestHeader(value = "userId", defaultValue = "mamba") String userId) {
         return ResultDTO.success(convService.rating(add, userId));
     }
+
+//    @GetMapping("/reference")
+//    @Operation(summary = "查看引用文档")
+//    public ResultDTO<> reference(@RequestParam("refId") String refId){
+//
+//    }
+
 }
