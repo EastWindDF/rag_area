@@ -177,7 +177,7 @@ public class CombineAIServiceImpl implements CombineAIService {
         String convId = ent.getId();
         if (!CollectionUtils.isEmpty(ents)) {
             List<ChatCitationInfoEnt> collect = ents.stream().filter(obj -> Objects.nonNull(obj) && StringUtils.hasText(obj.getId()))
-                    .map(ChatCitationInfoEnt::new)
+                    .map(citation->new ChatCitationInfoEnt(citation, convId))
                     .collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(collect)) {
                 chatCitationInfoDao.saveAllAndFlush(collect);

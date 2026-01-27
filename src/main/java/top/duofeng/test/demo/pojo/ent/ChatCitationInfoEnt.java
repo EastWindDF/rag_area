@@ -74,6 +74,11 @@ public class ChatCitationInfoEnt implements Serializable {
         return cit;
     }
 
+    public ChatCitationInfoEnt(ChatCitation vo, String convId){
+        this(vo);
+        this.convId = convId;
+    }
+
     public ChatCitationInfoEnt(ChatCitation vo){
         BeanUtils.copyProperties(vo, this);
         this.id = null;
