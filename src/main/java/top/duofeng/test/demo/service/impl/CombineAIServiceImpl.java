@@ -76,7 +76,7 @@ public class CombineAIServiceImpl implements CombineAIService {
         Flux<ChatResponseVO> merge = Flux.merge(fluxStream);
         merge.subscribe(item -> copeMap(item, resultMap, timeMap),
                 error -> log.error("FLUX订阅接口问题", error),
-                () -> saveConvRecords(begin, resultMap, timeMap));
+                () -> saveConvRecords(begin, req.getSession_id(), resultMap, timeMap));
         return merge;
     }
 
@@ -169,7 +169,7 @@ public class CombineAIServiceImpl implements CombineAIService {
         }
     }
 
-    private void saveConvRecords(LocalDateTime begin,
+    private void saveConvRecords(LocalDateTime begin, String sessId,
                                  Map<String, List<ChatResponseVO>> resultMap,
                                  Map<String, LocalDateTime> timeMap) {
         Map<String, List<ChatCitationInfoEnt>> citationMap = Maps.newConcurrentMap();
@@ -206,6 +206,10 @@ public class CombineAIServiceImpl implements CombineAIService {
             }
         });
         chatCitationInfoDao.saveAllAndFlush(citationInfos);
+        convSessionInfoDao.findById(sessId).ifPresent(info->{
+            info.setAnswered(Boolean.TRUE);
+            convSessionInfoDao.save(info);
+        });
     }
 
 

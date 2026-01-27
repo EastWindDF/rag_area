@@ -42,7 +42,8 @@ public class ConversationController {
 
     @PostMapping("/create")
     @Operation(summary = "创建对话")
-    public ResultDTO<ConvCreatedVO> create(@RequestBody @Valid ChatMsgReq req,@RequestHeader(value = "userId",defaultValue = "mamba") String userId) {
+    public ResultDTO<ConvCreatedVO> create(@RequestBody @Valid ChatMsgReq req,
+                                           @RequestHeader(value = "userId",defaultValue = "mamba") String userId) {
         return ResultDTO.success(convService.createConv(req, userId).toCreatedVO());
     }
 
