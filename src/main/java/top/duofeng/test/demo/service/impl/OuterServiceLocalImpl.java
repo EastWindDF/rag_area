@@ -34,6 +34,7 @@ import static java.lang.Integer.min;
 @ConditionalOnProperty(prefix = "spring.profiles", name = "active", havingValue = "local", matchIfMissing = true)
 public class OuterServiceLocalImpl implements OuterService {
 
+    private static final List<String> THINK_TXT = Lists.newArrayList("<think>","用户提","问想知","道是","</think>");
     private static final String TEXT = "你好！我是 Qwen，通义千问的助手。我是一个由通义实验室开发的大规模语言模型，能够帮助你回答问题、创作文字、编程、逻辑推理以及更多任务。有什么我可以帮助你的吗？";
 
 
@@ -42,6 +43,22 @@ public class OuterServiceLocalImpl implements OuterService {
                                            Pair<NormalCodeName, String> priPair,
                                            ChatMsgReq req) {
         List<ChatResponseVO> respList = Lists.newArrayList();
+
+        THINK_TXT.forEach(str->{
+            ChatResponseVO vo = new ChatResponseVO();
+            vo.setCreated(LocalDateTime.now().toEpochSecond(ZoneOffset.ofHours(8)));
+            vo.setSession_id(req.getSession_id());
+            ChatDelta delta = new ChatDelta();
+            ChatChoice choice = new ChatChoice();
+            choice.setDelta(delta);
+            delta.setContent(str);
+            choice.setFinish_reason(null);
+            vo.setChoices(Lists.newArrayList(choice));
+            vo.setPrivateId(priPair.getSecond());
+            vo.setMaskCode(priPair.getFirst().getCode());
+            vo.setMaskName(priPair.getFirst().getName());
+            respList.add(vo);
+        });
         int idx = 0;
         while (idx < TEXT.length()) {
             int i = min(idx + RandomUtil.randomInt(1, 3), TEXT.length());
