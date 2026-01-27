@@ -17,6 +17,14 @@ spring:
     time-zone: Asia/Shanghai
   gson:
     date-format: yyyy-MM-dd HH:mm:ss
+  mvc:
+    format:
+      date: yyyy-MM-dd HH:mm:ss
+      date-time: yyyy-MM-dd HH:mm:ss
+  webflux:
+    format:
+      date-time: yyyy-MM-dd HH:mm:ss
+      date: yyyy-MM-dd HH:mm:ss
 knife4j:
   cors: true
   setting:

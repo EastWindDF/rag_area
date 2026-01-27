@@ -18,9 +18,9 @@ import top.duofeng.test.demo.service.TestChatService;
  * dateTime 2026/1/25 0:38
  */
 
-@RestController
-@Tag(name = "测试接口")
-@RequestMapping("/combine")
+//@RestController
+//@Tag(name = "测试接口")
+//@RequestMapping("/combine")
 public class TestController {
 private final TestChatService testChatService;
 

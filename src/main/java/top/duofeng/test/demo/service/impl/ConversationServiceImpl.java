@@ -181,6 +181,25 @@ public class ConversationServiceImpl implements ConversationService {
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean rename(String sessionId, String title, String userId) {
+        convSessionInfoDao.findById(sessionId).ifPresent(ent->{
+            ent.setTitle(title);
+            ent.setGmtModified(LocalDateTime.now());
+            convSessionInfoDao.saveAndFlush(ent);
+        });
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean del(String sessionId, String userId) {
+        convSessionInfoDao.findById(sessionId).ifPresent(ent->{
+            ent.setDeleted(Boolean.TRUE);
+            ent.setGmtModified(LocalDateTime.now());
+        });
+        return Boolean.TRUE;
+    }
+
     private String getQuestionFromReq(ChatMsgReq req) {
         return Optional.ofNullable(req).map(ChatMsgReq::getMessages)
                 .filter(list -> !CollectionUtils.isEmpty(list))

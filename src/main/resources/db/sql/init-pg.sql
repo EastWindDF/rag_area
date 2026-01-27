@@ -31,6 +31,7 @@ create table tb_conv_session_info
     task_id      varchar(64),
     answered     bool      default false,
     question     text,
+    deleted      bool      default false,
     gmt_create   timestamp default current_timestamp,
     gmt_modified timestamp default current_timestamp
 );
@@ -138,3 +139,29 @@ comment on column tb_chat_star_rating.processing is '智能化处理';
 comment on column tb_chat_star_rating.remark is '备注（文字）';
 comment on column tb_chat_star_rating.user_id is '用户ID';
 comment on column tb_chat_star_rating.gmt_create is '插入时间';
+
+
+-- 创建反馈评论信息表;
+create table tb_feedback_comment
+(
+    id       varchar(64) primary key,
+    pri_id   varchar(64),
+    comments varchar(4000)
+);
+comment on table tb_feedback_comment is '反馈评论信息表';
+comment on column tb_feedback_comment.pri_id is '私有ID';
+comment on column tb_feedback_comment.comments is '评论';
+
+
+-- 创建系统私钥映射;
+create table tb_module_cipher
+(
+    id          varchar(64) primary key,
+    module      varchar(255),
+    public_key  varchar(4000),
+    private_key varchar(4000)
+);
+comment on table tb_module_cipher is '系统私钥映射';
+comment on column tb_module_cipher.module is '模型ID';
+comment on column tb_module_cipher.public_key is '公钥';
+comment on column tb_module_cipher.private_key is '私钥';

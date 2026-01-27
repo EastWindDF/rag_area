@@ -94,17 +94,27 @@ public class ConversationController {
 
 
     @PostMapping("/rating")
-    @Operation(summary = "星评")
+    @Operation(summary = "星评", hidden = true)
     public ResultDTO<Boolean> rating(
             @RequestBody ChatStarRatingAdd add,
             @RequestHeader(value = "userId", defaultValue = "mamba") String userId) {
         return ResultDTO.success(convService.rating(add, userId));
     }
 
-//    @GetMapping("/reference")
-//    @Operation(summary = "查看引用文档")
-//    public ResultDTO<> reference(@RequestParam("refId") String refId){
-//
-//    }
 
+    @GetMapping("/del")
+    @Operation(summary = "删除会话")
+    public ResultDTO<Boolean> del(@RequestParam("sessionId") String sessionId,
+                                  @RequestHeader(value = "userId", defaultValue = "mamba") String userId){
+        return ResultDTO.success(convService.del(sessionId, userId));
+    }
+
+
+    @GetMapping("/rename")
+    @Operation(summary = "修改会话名称")
+    public ResultDTO<Boolean> rename(@RequestParam("sessionId") String sessionId,
+                                  @RequestParam("title") String title,
+                                  @RequestHeader(value = "userId", defaultValue = "mamba") String userId){
+        return ResultDTO.success(convService.rename(sessionId, title, userId));
+    }
 }

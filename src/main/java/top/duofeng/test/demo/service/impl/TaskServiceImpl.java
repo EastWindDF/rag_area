@@ -7,6 +7,7 @@ import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import top.duofeng.test.demo.dao.ConvRecordInfoDao;
 import top.duofeng.test.demo.dao.ConvSessionInfoDao;
 import top.duofeng.test.demo.dao.TaskInfoDao;
@@ -56,6 +57,7 @@ public class TaskServiceImpl implements TaskService {
         } else {
             Map<String, List<CommonTreeDict>> collect = sessionInfoDao.findAll((r, q, c) ->
                             c.and(c.isTrue(r.get("answered")),
+                                    c.isFalse(r.get("deleted")),
                                     r.get("taskId").in(tasks.stream().map(TaskInfoEnt::getId).toList())), Sort.by(Sort.Order.desc("gmtCreate")))
                     .stream().collect(Collectors.groupingBy(
                             ConvSessionInfoEnt::getTaskId,

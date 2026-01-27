@@ -24,4 +24,8 @@ public interface ConversationService {
     Boolean rating(ChatStarRatingAdd add, String userId);
 
     Boolean unlike(String priId, String userId);
+
+    Boolean rename(String sessionId, String title, String userId);
+
+    Boolean del(String sessionId, String userId);
 }

@@ -27,9 +27,7 @@ public class RagAreaConfig implements Serializable {
     private List<OuterServiceInfo> outerServices;
     private List<NormalCodeName> maskProps;
     private String defaultModel;
-
-
-
+    private Boolean mockEnabled = Boolean.FALSE;
     public Map<String, OuterServiceInfo> getOuterServiceMap(){
         return Optional.ofNullable(outerServices)
                 .map(list->list.stream().collect(Collectors.toMap(OuterServiceInfo::getCode,

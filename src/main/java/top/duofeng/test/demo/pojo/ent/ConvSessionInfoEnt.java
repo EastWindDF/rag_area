@@ -36,6 +36,8 @@ public class ConvSessionInfoEnt implements Serializable {
     private String question;
     @Column(name = "answered")
     private Boolean answered;
+    @Column(name = "deleted")
+    private Boolean deleted;
     @Schema(title = "创建时间")
     @Column(name = "gmt_create")
     private LocalDateTime gmtCreate;

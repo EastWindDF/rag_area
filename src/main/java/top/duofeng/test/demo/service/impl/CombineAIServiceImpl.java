@@ -87,6 +87,11 @@ public class CombineAIServiceImpl implements CombineAIService {
         String priId = req.getPriId();
         final NormalCodeName[] modelEnum = new NormalCodeName[1];
         final LocalDateTime[] times = new LocalDateTime[1];
+        final String question = Optional.of(req).map(ChatMsgReq::getMessages)
+                .filter(list -> !CollectionUtils.isEmpty(list))
+                .map(list -> list.get(0))
+                .map(ChatMessage::getContent)
+                .orElse(null);
         Flux<ChatResponseVO> flux = sessPriMappingDao.findOne((r, q, c) -> c.equal(r.get("priId"), priId))
                 .map(ent -> {
                     modelEnum[0] = maskMap.get(ent.getMaskCode());
@@ -98,7 +103,9 @@ public class CombineAIServiceImpl implements CombineAIService {
                     }
                     sessionInfo.filter(info -> !StringUtils.hasText(info.getQuestion()))
                             .ifPresent(info -> {
-                                info.setQuestion(req.getMessages().get(0).getContent());
+                                info.setQuestion(question);
+                                assert question != null;
+                                info.setTitle(question.substring(0, Integer.min(200, question.length())));
                                 convSessionInfoDao.saveAndFlush(info);
                             });
                     return ent.getSysCode();
@@ -115,7 +122,8 @@ public class CombineAIServiceImpl implements CombineAIService {
                 () -> saveConvRecord(times[0], results, time.get(), req, isPri));
         return flux;
     }
-    private void addResults(List<ChatResponseVO> results, ChatResponseVO vo, AtomicReference<LocalDateTime> times){
+
+    private void addResults(List<ChatResponseVO> results, ChatResponseVO vo, AtomicReference<LocalDateTime> times) {
         results.add(vo);
         times.set(LocalDateTime.now());
     }
@@ -146,7 +154,7 @@ public class CombineAIServiceImpl implements CombineAIService {
                                 ChatMsgReq req, boolean isPri) {
         String answer = BLANK;
         List<ChatCitation> ents = Lists.newArrayList();
-        if(!CollectionUtils.isEmpty(results)){
+        if (!CollectionUtils.isEmpty(results)) {
             answer = results.stream().map(ChatResponseVO::getChoices)
                     .filter(list -> !CollectionUtils.isEmpty(list))
                     .map(list -> list.get(0))
@@ -167,11 +175,11 @@ public class CombineAIServiceImpl implements CombineAIService {
         ent.setCommon(!isPri);
         ent = convInfoDao.saveAndFlush(ent);
         String convId = ent.getId();
-        if(!CollectionUtils.isEmpty(ents)){
+        if (!CollectionUtils.isEmpty(ents)) {
             List<ChatCitationInfoEnt> collect = ents.stream().filter(obj -> Objects.nonNull(obj) && StringUtils.hasText(obj.getId()))
                     .map(ChatCitationInfoEnt::new)
                     .collect(Collectors.toList());
-            if(!CollectionUtils.isEmpty(collect)){
+            if (!CollectionUtils.isEmpty(collect)) {
                 chatCitationInfoDao.saveAllAndFlush(collect);
             }
         }
@@ -224,7 +232,7 @@ public class CombineAIServiceImpl implements CombineAIService {
             }
         });
         chatCitationInfoDao.saveAllAndFlush(citationInfos);
-        convSessionInfoDao.findById(sessId).ifPresent(info->{
+        convSessionInfoDao.findById(sessId).ifPresent(info -> {
             info.setAnswered(Boolean.TRUE);
             convSessionInfoDao.save(info);
         });

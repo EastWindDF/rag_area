@@ -44,3 +44,4 @@ rag-area:
     - code: DELTA
       name: 模型D
   default-model: qwen3:8b
+  mock-enabled: true

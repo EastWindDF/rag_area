@@ -18,6 +18,7 @@ create table tb_conv_session_info
     title        varchar(1024),
     task_id      varchar(64),
     answered     bool      default false,
+    deleted      bool      default false,
     question     text,
     gmt_create   timestamp default current_timestamp,
     gmt_modified timestamp default current_timestamp
@@ -76,4 +77,19 @@ create table tb_chat_star_rating
     remark       text,
     user_id      varchar(64),
     gmt_create   timestamp default current_timestamp
+);
+
+
+create table tb_feedback_comment
+(
+    id       varchar(64) primary key,
+    pri_id   varchar(64),
+    comments varchar(4000)
+);
+create table tb_module_cipher
+(
+    id          varchar(64) primary key,
+    module      varchar(255),
+    public_key  varchar(4000),
+    private_key varchar(4000)
 );

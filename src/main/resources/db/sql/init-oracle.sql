@@ -1,14 +1,14 @@
 -- 创建任务信息表;
 create table tb_task_info
 (
-    id           varchar(64) primary key,
-    title        varchar(64),
+    id           varchar2(64) primary key,
+    title        varchar2(64),
     description  clob,
-    support_unit varchar(1000),
-    bus_dir      varchar(1000),
-    work_goal    varchar(1000),
-    creator_id   varchar(64),
-    creator_name varchar(256),
+    support_unit varchar2(1000),
+    bus_dir      varchar2(1000),
+    work_goal    varchar2(1000),
+    creator_id   varchar2(64),
+    creator_name varchar2(256),
     defaulted    number(1) default 0,
     gmt_create   date      default sysdate
 );
@@ -26,10 +26,11 @@ comment on column tb_task_info.work_goal is '工作方向';
 -- 创建会话信息表;
 create table tb_conv_session_info
 (
-    id           varchar(64) primary key,
-    title        varchar(1024),
-    task_id      varchar(64),
+    id           varchar2(64) primary key,
+    title        varchar2(1024),
+    task_id      varchar2(64),
     answered     number(1) default 0,
+    deleted      number(1) default 0,
     question     clob,
     gmt_create   date      default sysdate,
     gmt_modified date      default sysdate
@@ -44,12 +45,12 @@ comment on column tb_conv_session_info.answered is '是否已答复';
 -- 创建会话与对应模型ID映射表;
 create table tb_sess_pri_mapping
 (
-    id           varchar(64) primary key,
-    sess_id      varchar(64),
-    pri_id       varchar(64),
-    sys_code     varchar(64),
-    mask_name    varchar(128),
-    mask_code    varchar(128),
+    id           varchar2(64) primary key,
+    sess_id      varchar2(64),
+    pri_id       varchar2(64),
+    sys_code     varchar2(64),
+    mask_name    varchar2(128),
+    mask_code    varchar2(128),
     liked        number(10) default 0,
     grade        float      default 0,
     gmt_create   date       default sysdate,
@@ -66,8 +67,8 @@ comment on column tb_sess_pri_mapping.grade is '评判星级';
 -- 创建对话详情表;
 create table tb_conv_record_info
 (
-    id        varchar(64) primary key,
-    pri_id    varchar(64),
+    id        varchar2(64) primary key,
+    pri_id    varchar2(64),
     question  clob,
     answer    clob,
     common    number(1) default 1,
@@ -86,16 +87,16 @@ comment on column tb_conv_record_info.gmt_begin is '问答结束时间';
 -- 创建对话附件信息表;
 create table tb_chat_citation_info
 (
-    id         varchar(64) primary key,
-    conv_id    varchar(64),
-    ref_id     varchar(128),
+    id         varchar2(64) primary key,
+    conv_id    varchar2(64),
+    ref_id     varchar2(128),
     summary    clob,
     gmt_begin  date,
     duration   number(10),
     order_num  number(10) default 0,
-    call_num   varchar(128),
-    called_num varchar(128),
-    labels     varchar(4000)
+    call_num   varchar2(128),
+    called_num varchar2(128),
+    labels     varchar2(4000)
 );
 comment on table tb_chat_citation_info is '对话附件信息表';
 comment on column tb_chat_citation_info.conv_id is '对话ID';
@@ -112,8 +113,8 @@ comment on column tb_chat_citation_info.order_num is '排序字段';
 -- 创建星评信息表;
 create table tb_chat_star_rating
 (
-    id           varchar(64) primary key,
-    pri_id       varchar(64),
+    id           varchar2(64) primary key,
+    pri_id       varchar2(64),
     time_spent   number(10) default 0,
     content      number(10) default 0,
     accuracy     number(10) default 0,
@@ -122,7 +123,7 @@ create table tb_chat_star_rating
     tag_accuracy number(10) default 0,
     processing   number(10) default 0,
     remark       clob,
-    user_id      varchar(64),
+    user_id      varchar2(64),
     gmt_create   date       default sysdate
 );
 
@@ -138,3 +139,28 @@ comment on column tb_chat_star_rating.processing is '智能化处理';
 comment on column tb_chat_star_rating.remark is '备注（文字）';
 comment on column tb_chat_star_rating.user_id is '用户ID';
 comment on column tb_chat_star_rating.gmt_create is '插入时间';
+
+-- 创建反馈评论信息表;
+create table tb_feedback_comment
+(
+    id       varchar2(64) primary key,
+    pri_id   varchar2(64),
+    comments varchar2(4000)
+);
+comment on table tb_feedback_comment is '反馈评论信息表';
+comment on column tb_feedback_comment.pri_id is '私有ID';
+comment on column tb_feedback_comment.comments is '评论';
+
+
+-- 创建系统私钥映射;
+create table tb_module_cipher
+(
+    id          varchar2(64) primary key,
+    module      varchar2(255),
+    public_key  varchar2(4000),
+    private_key varchar2(4000)
+);
+comment on table tb_module_cipher is '系统私钥映射';
+comment on column tb_module_cipher.module is '模型ID';
+comment on column tb_module_cipher.public_key is '公钥';
+comment on column tb_module_cipher.private_key is '私钥';

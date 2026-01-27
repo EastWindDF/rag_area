@@ -22,6 +22,7 @@
         <commons-lang3.version>3.18.0</commons-lang3.version>
         <logback-core.version>1.5.25</logback-core.version>
         <liqui.base.version>4.10.0</liqui.base.version>
+        <hibernate-validator.version>6.2.5.Final</hibernate-validator.version>
         <buildPath>//${build.directory}</buildPath>
         <logFileName>info.log</logFileName>
     </properties>
