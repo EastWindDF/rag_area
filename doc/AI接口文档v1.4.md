@@ -165,7 +165,7 @@ data: [DONE]
 | `time_point ` | Number | 时间点，单位：秒。 | `` |
 | `key_elements ` | Object | 关键要素。 |  |
 | `key_elements.persons ` | String[] | 人物数组 | `["Tom","Jerry"]` |
-| `key_elements.oragnizations ` | String[] | 组织数组 | `["Club","Bar"]` |
+| `key_elements.organizations ` | String[] | 组织数组 | `["Club","Bar"]` |
 | `key_elements.events ` | String[] | 事件数组 | `["New Year","event1"]` |
 | `key_elements.others ` | String[] | 其余元素数组 | `["other1","other2"]` |
 ---
