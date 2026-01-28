@@ -15,10 +15,7 @@ import top.duofeng.test.demo.config.MockConfiguration;
 import top.duofeng.test.demo.config.RagAreaConfig;
 import top.duofeng.test.demo.pojo.req.ChatMessage;
 import top.duofeng.test.demo.pojo.req.ChatMsgReq;
-import top.duofeng.test.demo.pojo.res.ChatChoice;
-import top.duofeng.test.demo.pojo.res.ChatCitation;
-import top.duofeng.test.demo.pojo.res.ChatDelta;
-import top.duofeng.test.demo.pojo.res.ChatResponseVO;
+import top.duofeng.test.demo.pojo.res.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -68,5 +65,19 @@ public class DataCreateUtil implements Serializable {
 
     }
 
+    public static ReferenceDetailVO fakReferenceDetail(){
+        ReferenceDetailVO result = new ReferenceDetailVO();
+        result.setTrans("[\"1\",\"2\",\"3\"]");
+        result.setContent("[\"1\",\"2\",\"3\"]");
+        result.setRef_id("1778");
+        result.setTime_point(LocalDateTime.now().toEpochSecond(ZoneOffset.of("+8")));
+        KeyElements keyElements = new KeyElements();
+        keyElements.setEvents(Lists.newArrayList("1","2","3"));
+        keyElements.setOthers(Lists.newArrayList("1","2","3"));
+        keyElements.setOrganizations(Lists.newArrayList("1","2","3"));
+        keyElements.setPersons(Lists.newArrayList("1","2","3"));
+        result.setKey_elements(keyElements);
+        return result;
+    }
 
 }
