@@ -77,33 +77,34 @@ public class ConversationServiceImpl implements ConversationService {
     public HistoryChatVO his(String id, String priId, String userId) {
         HistoryChatVO vo = new HistoryChatVO();
         vo.setSessionId(id);
+        Boolean isPri = StringUtils.hasText(priId);
         ConvSessionInfoEnt convSess = convSessionInfoDao.findById(id).orElse(null);
         Optional.ofNullable(convSess)
                 .map(ConvSessionInfoEnt::getQuestion)
                 .ifPresent(vo::setQuestion);
         List<SessPriMappingEnt> all = sessPriMappingDao
                 .findAll((r, q, c) -> c.and(c.equal(r.get("sessId"), id),
-                        StringUtils.hasText(priId) ? c.equal(r.get("priId"), priId) : c.isNotNull(r.get("priId"))
+                        isPri ? c.equal(r.get("priId"), priId) : c.isNotNull(r.get("priId"))
                 ));
         List<String> list = all.stream().map(SessPriMappingEnt::getPriId).toList();
         Map<String, List<ConvRecordInfoEnt>> collect = recordInfoDao
                 .findAll((r, q, c) ->
                         c.and(
                                 r.get("priId").in(list),
-                                StringUtils.hasText(priId) ? c.equal(r.get("priId"), priId) : c.isTrue(r.get("common"))
+                                isPri ? c.equal(r.get("priId"), priId) : c.isTrue(r.get("common"))
                         ), Sort.by(Sort.Direction.ASC, "gmtBegin")).stream().collect(
                         Collectors.groupingBy(ConvRecordInfoEnt::getPriId)
                 );
         vo.setChatMap(all.stream().collect(Collectors.toMap(e ->
                         maskMap.get(e.getMaskCode()).getCode(),
-                e -> toResponse(e, collect.get(e.getPriId())),
+                e -> toResponse(e, collect.get(e.getPriId()), isPri ),
                 (v1, v2) -> v1
         )));
         return vo;
     }
 
-    private List<ChatRespWithLikedVO> toResponse(SessPriMappingEnt mappingEnt, List<ConvRecordInfoEnt> records) {
-        return records.stream().filter(ConvRecordInfoEnt::getCommon)
+    private List<ChatRespWithLikedVO> toResponse(SessPriMappingEnt mappingEnt, List<ConvRecordInfoEnt> records, Boolean all) {
+        return records.stream().filter(ent->all || ent.getCommon())
                 .map(ent -> {
                     ChatRespWithLikedVO vo = new ChatRespWithLikedVO();
                     vo.setObject(null);
@@ -112,6 +113,7 @@ public class ConversationServiceImpl implements ConversationService {
                     vo.setPrivateId(ent.getPriId());
                     vo.setMaskName(mappingEnt.getMaskName());
                     vo.setSession_id(mappingEnt.getSessId());
+                    vo.setQuestion(ent.getQuestion());
                     ChatChoice choice = new ChatChoice();
                     ChatDelta delta = new ChatDelta();
                     delta.setContent(ent.getAnswer());
@@ -196,6 +198,7 @@ public class ConversationServiceImpl implements ConversationService {
         convSessionInfoDao.findById(sessionId).ifPresent(ent->{
             ent.setDeleted(Boolean.TRUE);
             ent.setGmtModified(LocalDateTime.now());
+            convSessionInfoDao.save(ent);
         });
         return Boolean.TRUE;
     }

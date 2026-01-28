@@ -51,7 +51,7 @@ public class TaskController {
     }
 
     @GetMapping("/del")
-    @Operation(summary = "修改任务名称")
+    @Operation(summary = "删除任务")
     public ResultDTO<Boolean> del(
             @RequestParam("code") String code, @RequestHeader(value = "userId",defaultValue = "mamba") String userId){
         return ResultDTO.success(taskService.del(code, userId));

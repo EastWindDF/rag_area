@@ -92,7 +92,8 @@ public class CombineAIServiceImpl implements CombineAIService {
                 .map(list -> list.get(0))
                 .map(ChatMessage::getContent)
                 .orElse(null);
-        Flux<ChatResponseVO> flux = sessPriMappingDao.findOne((r, q, c) -> c.equal(r.get("priId"), priId))
+        Flux<ChatResponseVO> flux = sessPriMappingDao.findOne((r, q, c) ->
+                        c.equal(r.get("priId"), priId))
                 .map(ent -> {
                     modelEnum[0] = maskMap.get(ent.getMaskCode());
                     Optional<ConvSessionInfoEnt> sessionInfo = convSessionInfoDao.findById(ent.getSessId());
@@ -115,17 +116,15 @@ public class CombineAIServiceImpl implements CombineAIService {
                             .doOnNext(resp -> times[0] = LocalDateTime.now());
                 })
                 .orElse(Flux.empty());
-        List<ChatResponseVO> results = Lists.newArrayList();
+        List<ChatResponseVO> results = Lists.newCopyOnWriteArrayList();
         AtomicReference<LocalDateTime> time = new AtomicReference<>(LocalDateTime.now());
-        flux.subscribe(item -> addResults(results, item, time),
+        flux.subscribe(item -> {
+                    results.add(item);
+                    time.set(LocalDateTime.now());
+                },
                 error -> log.error("FLUX订阅接口问题", error),
-                () -> saveConvRecord(times[0], results, time.get(), req, isPri));
+                () -> saveConvRecord(times[0], results, time.get(), req, isPri, question));
         return flux;
-    }
-
-    private void addResults(List<ChatResponseVO> results, ChatResponseVO vo, AtomicReference<LocalDateTime> times) {
-        results.add(vo);
-        times.set(LocalDateTime.now());
     }
 
     private void copeMap(ChatResponseVO vo, Map<String, List<ChatResponseVO>> map, Map<String, LocalDateTime> timeMap) {
@@ -151,7 +150,7 @@ public class CombineAIServiceImpl implements CombineAIService {
     private void saveConvRecord(LocalDateTime gmtBegin,
                                 List<ChatResponseVO> results,
                                 LocalDateTime endTime,
-                                ChatMsgReq req, boolean isPri) {
+                                ChatMsgReq req, boolean isPri, String question) {
         String answer = BLANK;
         List<ChatCitation> ents = Lists.newArrayList();
         if (!CollectionUtils.isEmpty(results)) {
@@ -171,13 +170,14 @@ public class CombineAIServiceImpl implements CombineAIService {
         ent.setPriId(req.getPriId());
         ent.setGmtBegin(gmtBegin);
         ent.setAnswer(answer);
+        ent.setQuestion(question);
         ent.setGmtEnd(endTime);
         ent.setCommon(!isPri);
         ent = convInfoDao.saveAndFlush(ent);
         String convId = ent.getId();
         if (!CollectionUtils.isEmpty(ents)) {
             List<ChatCitationInfoEnt> collect = ents.stream().filter(obj -> Objects.nonNull(obj) && StringUtils.hasText(obj.getId()))
-                    .map(citation->new ChatCitationInfoEnt(citation, convId))
+                    .map(citation -> new ChatCitationInfoEnt(citation, convId))
                     .collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(collect)) {
                 chatCitationInfoDao.saveAllAndFlush(collect);

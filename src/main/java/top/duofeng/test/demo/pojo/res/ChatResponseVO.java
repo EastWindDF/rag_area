@@ -16,5 +16,6 @@ public class ChatResponseVO implements Serializable {
     private List<ChatCitation> citations;
     private String maskName;
     private String maskCode;
+    private String question;
     private String privateId;
 }
